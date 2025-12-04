@@ -1,115 +1,139 @@
-import React, { useState, useEffect } from 'react';
-import Editor from 'react-simple-code-editor';
-import { highlight, languages } from 'prismjs/components/prism-core';
-import 'prismjs/components/prism-clike';
-import 'prismjs/components/prism-javascript';
-import 'prismjs/themes/prism-tomorrow.css';
+import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github-dark.css';
+import { Link } from 'react-router-dom';
 
 const ChatInterface = () => {
-    const [code, setCode] = useState(``);
-    const [response, setResponse] = useState("AI response will appear here...");
+    const [messages, setMessages] = useState([]);
+    const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
+    const messagesEndRef = useRef(null);
 
-    const handleReview = async () => {
+
+
+    const handleSend = async () => {
+        if (!input.trim() || loading) return;
+
+        const userMessage = { role: 'user', content: input };
+        setMessages(prev => [...prev, userMessage]);
+        setInput('');
         setLoading(true);
-        setResponse("Analyzing code...");
+
         try {
             const res = await fetch(`${import.meta.env.VITE_BASE_URL}/ai/get-response`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ prompt: code }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: input }),
             });
 
-            if (!res.ok) {
-                throw new Error('Failed to fetch response');
-            }
+            if (!res.ok) throw new Error('Failed to fetch response');
 
-            const data = await res.text(); // Backend seems to send text directly or json? Controller says res.send(response).
-            // If response is an object, we might need to parse it. 
-            // Let's assume it sends the text content directly based on ai.service.js usage.
-            // But wait, if it returns JSON, res.text() will be a JSON string.
-            // Let's try to parse as JSON first, if fails, use text.
-
+            const data = await res.text();
+            let aiResponse;
             try {
                 const jsonData = JSON.parse(data);
-                // If it's an object with a message or similar
-                if (typeof jsonData === 'object' && jsonData !== null) {
-                    setResponse(jsonData.response || jsonData.message || JSON.stringify(jsonData, null, 2));
-                } else {
-                    setResponse(jsonData);
-                }
-            } catch (e) {
-                setResponse(data);
+                aiResponse = jsonData.response || jsonData.message || JSON.stringify(jsonData, null, 2);
+            } catch {
+                aiResponse = data;
             }
 
+            setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
         } catch (error) {
-            setResponse("Error: " + error.message);
+            setMessages(prev => [...prev, { role: 'assistant', content: 'Error: ' + error.message }]);
         } finally {
             setLoading(false);
         }
     };
 
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+        }
+    };
+
     return (
-        <div className="flex flex-col h-screen bg-[#0f0f12] text-white overflow-hidden">
-            {/* Header */}
-            <header className="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-[#1a1a1a]/50 backdrop-blur-md">
-                <h1 className="text-xl font-bold bg-linear-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-                    Code Review AI
-                </h1>
-                <button
-                    onClick={handleReview}
-                    disabled={loading}
-                    className={`px-6 py-2 rounded-lg font-medium transition-all duration-300 
-            ${loading
-                            ? 'bg-gray-700 cursor-not-allowed text-gray-400'
-                            : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg hover:shadow-blue-500/20'
-                        }`}
-                >
-                    {loading ? 'Reviewing...' : 'Review Code'}
+        <div className="flex h-screen bg-[#151922]">
+            {/* Sidebar
+            <div className="w-64 bg-[#191d25] p-4 hidden md:block shrink-0">
+                <button className="w-full py-3 px-4 rounded-lg border border-slate-700 text-white text-left hover:bg-[#2a2a2a] transition-colors">
+                    + New Chat
                 </button>
-            </header>
+                <div className="mt-6 text-sm text-slate-400">
+                    <p>Chat History</p>
+                </div>
+            </div> */}
 
             {/* Main Content */}
-            <div className="flex flex-1 overflow-hidden">
-                {/* Left Side - Code Editor */}
-                <div className="w-1/2 border-r border-gray-800 flex flex-col">
-                    <div className="bg-[#1e1e1e] px-4 py-2 text-sm text-gray-400 border-b border-gray-800 flex justify-between">
-                        <span>Input Code</span>
-                    </div>
-                    <div className="flex-1 overflow-auto bg-[#1e1e1e] relative">
-                        <Editor
-                            value={code}
-                            placeholder='// Paste your code here to review...
-function example() {
-  console.log("Hello World");
-}'
-                            onValueChange={code => setCode(code)}
-                            highlight={code => highlight(code, languages.js)}
-                            padding={20}
-                            style={{
-                                fontFamily: '"Fira Code", "Fira Mono", monospace',
-                                fontSize: 14,
-                                minHeight: '100%',
-                            }}
-                            className="min-h-full"
-                        />
-                    </div>
+            <div className="flex-1 flex flex-col min-w-0">
+                {/* Header */}
+                <header className="flex items-center justify-center py-3 border-b border-[#2a2a2a] shrink-0">
+                    <Link to={"/"} className="text-white font-medium">CodeRev</Link>
+                </header>
+
+                {/* Messages Area */}
+                <div className="flex-1 overflow-y-auto pb-32">
+                    {messages.length === 0 ? (
+                        <div className="h-full flex flex-col items-center justify-center text-white">
+                            <h2 className="text-2xl font-semibold">What can I help with?</h2>
+                        </div>
+                    ) : (
+                        <div className="max-w-3xl mx-auto py-6 px-4">
+                            {messages.map((msg, index) => (
+                                <div key={index} className={`mb-6 ${msg.role === 'user' ? 'text-right' : ''}`}>
+                                    <div className={`inline-block max-w-full text-left rounded-2xl px-4 py-3 ${msg.role === 'user' ? 'bg-[#282f41] text-white' : 'text-white'
+                                        }`}>
+                                        {msg.role === 'assistant' ? (
+                                            <div className="prose prose-invert max-w-none">
+                                                <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+                                                    {msg.content}
+                                                </ReactMarkdown>
+                                            </div>
+                                        ) : (
+                                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                            {loading && (
+                                <div className="mb-6">
+                                    <span className="text-white">Thinking...</span>
+                                </div>
+                            )}
+                            <div ref={messagesEndRef} />
+                        </div>
+                    )}
                 </div>
 
-                {/* Right Side - AI Response */}
-                <div className="w-1/2 flex flex-col bg-[#0f0f12]">
-                    <div className="bg-[#0f0f12] px-4 py-2 text-sm text-gray-400 border-b border-gray-800">
-                        <span>AI Feedback</span>
-                    </div>
-                    <div className="flex-1 text-left overflow-auto p-6 prose prose-invert max-w-none">
-                        <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
-                            {response}
-                        </ReactMarkdown>
+                {/* Input Area - Fixed at bottom */}
+                <div className="absolute bottom-0 left-0 right-0 md:left-6 p-4 bg-[#151922]">
+                    <div className="max-w-3xl mx-auto">
+                        <div className="relative bg-[#282f41] rounded-2xl">
+                            <textarea
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Message CodeRev..."
+                                rows={1}
+                                className="w-full bg-transparent text-white px-4 py-4 pr-12 resize-none outline-none rounded-2xl"
+                            />
+                            <button
+                                onClick={handleSend}
+                                disabled={loading || !input.trim()}
+                                className={`absolute right-3 bottom-3 p-2 rounded-lg ${input.trim() && !loading
+                                        ? 'bg-white text-black hover:bg-gray-200'
+                                        : 'bg-[#4a4a4a] text-gray-500 cursor-not-allowed'
+                                    } transition-colors`}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                        <p className="text-xs text-center text-slate-500 mt-2">
+                            CodeRev can make mistakes. Review important code carefully.
+                        </p>
                     </div>
                 </div>
             </div>
