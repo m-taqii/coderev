@@ -5,7 +5,7 @@ async function aiResponse(req, res) {
     if (!prompt) {
         res.status(400).json({ message: "Prompt is required" })
     }
-    const response = await aiService.chatWithLongCat(prompt);
+    const response = await aiService.generateResponse(prompt);
     res.send(response);
 }
 
