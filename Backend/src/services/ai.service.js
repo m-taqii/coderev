@@ -58,13 +58,13 @@ async function generateResponse(prompt) {
 
     try {
 
-        if (chatHistory.length > 20) {
+        if (chatHistory.length > 10) {
             chatHistory.shift(); // remove oldest
         }
         // push user message to history
         chatHistory.push({ role: "user", content: prompt });
         const response = await openai.chat.completions.create({
-            model: 'longcat-flash-thinking', // Or the specific LongCat model you want to use
+            model: 'longcat-flash-chat', // Or the specific LongCat model you want to use
             messages: [
                 { role: 'system', content: SYSTEM_INSTRUCTION }, // System instruction goes first
                 ...chatHistory,             // User prompt goes second

@@ -98,7 +98,7 @@ const ChatInterface = () => {
                             ))}
                             {loading && (
                                 <div className="mb-6">
-                                    <span className="text-white">Thinking...</span>
+                                    <span className="text-white animate-pulse">Thinking...</span>
                                 </div>
                             )}
                             <div ref={messagesEndRef} />
