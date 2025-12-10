@@ -3,11 +3,13 @@ import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github-dark.css';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 const ChatInterface = () => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
+    const [model, setModel] = useState('gemini-2.5-flash');
     const messagesEndRef = useRef(null);
 
 
@@ -21,15 +23,14 @@ const ChatInterface = () => {
         setLoading(true);
 
         try {
-            const res = await fetch(`${import.meta.env.VITE_BASE_URL}/ai/get-response`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: input }),
+            const res = await axios.post(`${import.meta.env.VITE_BASE_URL}/ai/get-response`, {
+                prompt: input,
+                model: model,
             });
 
-            if (!res.ok) throw new Error('Failed to fetch response');
+            if (!res.data) throw new Error('Failed to fetch response');
 
-            const data = await res.text();
+            const data = res.data;
             let aiResponse;
             try {
                 const jsonData = JSON.parse(data);
@@ -116,8 +117,17 @@ const ChatInterface = () => {
                                 onKeyDown={handleKeyDown}
                                 placeholder="Message CodeRev..."
                                 rows={1}
-                                className="w-full bg-transparent text-white px-4 py-4 pr-12 resize-none outline-none rounded-2xl"
+                                className="w-full h-24 bg-transparent text-white px-4 py-4 pr-12 resize-none outline-none rounded-2xl no-scrollbar"
                             />
+                            <select
+                                value={model}
+                                onChange={(e) => setModel(e.target.value)}
+                                className="absolute right-12 bottom-3 p-2 rounded-lg cursor-pointer bg-[#1e2536] mr-2 no-scrollbar"
+                            >
+                                <option value="gemini-2.5-flash">Quick Assist</option>
+                                <option value="longcat-flash-chat">Creative Writer</option>
+                                <option value="longcat-flash-thinking">Deep Thinker</option>
+                            </select>
                             <button
                                 onClick={handleSend}
                                 disabled={loading || !input.trim()}

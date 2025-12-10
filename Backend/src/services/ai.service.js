@@ -1,9 +1,10 @@
 const OpenAI = require('openai');
 
-const openai = new OpenAI({
-    apiKey: process.env.LONGCAT_API_KEY, // Replace with your actual LongCat API key
-    baseURL: 'https://api.longcat.chat/openai/v1', // Replace with the correct LongCat API base URL
-});
+let openai;
+let modelNameForAPI;
+
+// 4. Switch Logic to configure the correct API Provider
+
 
 // System instruction for the AI code reviewer
 const SYSTEM_INSTRUCTION = `
@@ -54,7 +55,36 @@ To act as the user’s expert engineering partner—help them understand, fix, i
 `;
 let chatHistory = [];
 
-async function generateResponse(prompt) {
+async function generateResponse(prompt, model) {
+
+switch (model) {
+    case 'gemini-2.5-flash':
+        openai = new OpenAI({
+            apiKey: process.env.GEMINI_API_KEY,
+            baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
+        });
+        modelNameForAPI = "gemini-2.5-flash";
+        break;
+
+    case 'longcat-flash-chat':
+        openai = new OpenAI({
+            apiKey: process.env.LONGCAT_API_KEY,
+            baseURL: "https://api.longcat.chat/openai/v1"
+        });
+        modelNameForAPI = "longcat-flash-chat";
+        break;
+
+    case 'longcat-flash-thinking':
+        openai = new OpenAI({
+            apiKey: process.env.LONGCAT_API_KEY,
+            baseURL: "https://api.longcat.chat/openai/v1"
+        });
+        modelNameForAPI = "longcat-flash-thinking";
+        break;
+
+    default:
+        return res.status(400).json({ error: "Invalid model selected" });
+}
 
     try {
 
@@ -64,12 +94,11 @@ async function generateResponse(prompt) {
         // push user message to history
         chatHistory.push({ role: "user", content: prompt });
         const response = await openai.chat.completions.create({
-            model: 'longcat-flash-chat', // Or the specific LongCat model you want to use
+            model: modelNameForAPI,
             messages: [
-                { role: 'system', content: SYSTEM_INSTRUCTION }, // System instruction goes first
-                ...chatHistory,             // User prompt goes second
+                { role: 'system', content: SYSTEM_INSTRUCTION }, 
+                ...chatHistory,           
             ],
-            // Optional: Add a temperature setting for creativity/consistency
             temperature: 0.2, // Lower temperature (e.g., 0.2) is good for code review/consistency
         });
 
@@ -78,7 +107,7 @@ async function generateResponse(prompt) {
 
         return reply
     } catch (error) {
-        console.error('Error interacting with LongCat AI:', error);
+        console.error('Error interacting with AI:', error);
         throw error;
     }
 }
