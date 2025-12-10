@@ -3,7 +3,6 @@ const OpenAI = require('openai');
 let openai;
 let modelNameForAPI;
 
-// 4. Switch Logic to configure the correct API Provider
 
 
 // System instruction for the AI code reviewer

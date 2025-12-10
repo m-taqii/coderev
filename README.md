@@ -5,7 +5,10 @@ CodeRev is a modern, AI-powered code review and developer assistant. It provides
 ## Features
 
 - **AI Code Review**: Get detailed feedback on code quality, bugs, and improvements
+- **Multiple AI Models**: Choose between Quick Assist, Creative Writer, or Deep Thinker modes
 - **Markdown Rendering**: AI responses support rich markdown with syntax highlighting
+- **User Authentication**: Sign up and login functionality with JWT tokens
+- **Chat History**: Maintains conversation context (up to 10 messages)
 - **Responsive Design**: Works on desktop and mobile devices
 - **Landing Page**: Modern homepage with feature highlights
 
@@ -18,6 +21,7 @@ CodeRev is a modern, AI-powered code review and developer assistant. It provides
 | Vite | 7.2.4 | Build Tool |
 | Tailwind CSS | 4.1.17 | Styling |
 | React Router DOM | 7.10.0 | Routing |
+| Axios | 1.13.2 | HTTP Client |
 | React Markdown | 10.1.0 | Markdown Rendering |
 | Rehype Highlight | 7.0.2 | Code Syntax Highlighting |
 | PrismJS | 1.30.0 | Additional Syntax Highlighting |
@@ -28,13 +32,18 @@ CodeRev is a modern, AI-powered code review and developer assistant. It provides
 | Node.js | - | Runtime |
 | Express | 5.1.0 | Web Framework |
 | OpenAI SDK | 6.9.1 | AI API Integration |
+| Mongoose | 9.0.1 | MongoDB ODM |
+| bcryptjs | 3.0.3 | Password Hashing |
+| jsonwebtoken | 9.0.3 | JWT Authentication |
 | CORS | 2.8.5 | Cross-Origin Requests |
 | dotenv | 17.2.3 | Environment Variables |
 
-### AI Service
-- **Provider**: LongCat AI (OpenAI-compatible API)
-- **Model**: longcat-flash-thinking
-- **Temperature**: 0.2 (optimized for code review accuracy)
+### AI Models
+| Model Name | Display Name | Provider |
+|------------|-------------|----------|
+| gemini-2.5-flash | Quick Assist | Google Gemini |
+| longcat-flash-chat | Creative Writer | LongCat AI |
+| longcat-flash-thinking | Deep Thinker | LongCat AI |
 
 ## Project Structure
 
@@ -42,13 +51,19 @@ CodeRev is a modern, AI-powered code review and developer assistant. It provides
 coderev/
 ├── Backend/
 │   ├── src/
-│   │   ├── app.js              # Express app setup
+│   │   ├── app.js              # Express app setup with routes
 │   │   ├── controllers/
-│   │   │   └── ai.controller.js
+│   │   │   ├── ai.controller.js
+│   │   │   └── userAuth.controller.js
 │   │   ├── routes/
-│   │   │   └── ai.route.js
-│   │   └── services/
-│   │       └── ai.service.js   # AI integration logic
+│   │   │   ├── ai.route.js
+│   │   │   └── userAuth.route.js
+│   │   ├── services/
+│   │   │   └── ai.service.js   # AI integration with multi-model support
+│   │   ├── models/
+│   │   │   └── user.model.js   # User schema with auth methods
+│   │   └── db/
+│   │       └── db.js           # MongoDB connection
 │   ├── server.js               # Server entry point
 │   ├── package.json
 │   └── .env                    # API keys (not committed)
@@ -56,6 +71,8 @@ coderev/
 ├── Frontend/
 │   ├── public/
 │   │   ├── robot.png           # Hero background image
+│   │   ├── loginimage.png      # Login page image
+│   │   ├── signupimage.png     # Signup page image
 │   │   └── fonts/              # Custom fonts (ScienceGothic)
 │   ├── src/
 │   │   ├── components/
@@ -63,7 +80,9 @@ coderev/
 │   │   │   └── Footer.jsx
 │   │   ├── pages/
 │   │   │   ├── Home.jsx        # Landing page
-│   │   │   └── ChatInterface.jsx # Chat UI
+│   │   │   ├── ChatInterface.jsx # Chat UI with model selection
+│   │   │   ├── Login.jsx       # Login page
+│   │   │   └── Signup.jsx      # Signup page
 │   │   ├── App.jsx             # Routes setup
 │   │   ├── App.css
 │   │   ├── index.css           # Global styles & fonts
@@ -76,28 +95,59 @@ coderev/
 └── .gitignore
 ```
 
-## Pages
+## Pages & Routes
 
-### Home (`/`)
-Landing page featuring:
-- Hero section with background image
-- "Why Our AI Developer" feature cards
-- "What It Can Do" capabilities grid
-- Footer with links
+| Route | Page | Description |
+|-------|------|-------------|
+| `/` | Home | Landing page with features |
+| `/chat` | ChatInterface | AI chat with model selection |
+| `/login` | Login | User login form |
+| `/signup` | Signup | User registration form |
 
-### Chat (`/chat`)
-ChatGPT-style interface with:
-- Sidebar for chat history (desktop)
-- Message area with user/AI bubbles
-- Fixed input area at bottom
-- Auto-scroll on new messages
+## API Endpoints
+
+### AI Routes (`/ai`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/ai/get-response` | Send prompt and model, receive AI response |
+
+**Request Body:**
+```json
+{
+  "prompt": "Your code or question here",
+  "model": "gemini-2.5-flash"
+}
+```
+
+### User Routes (`/user`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/user/signup` | Register new user |
+| POST | `/user/login` | Login existing user |
+
+**Signup Request:**
+```json
+{
+  "name": "User Name",
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+**Login Request:**
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
 
 ## Installation
 
 ### Prerequisites
 - Node.js (v18 or higher recommended)
-- npm or yarn
-- LongCat API key
+- MongoDB instance (local or cloud)
+- API keys for Gemini and/or LongCat AI
 
 ### 1. Clone the Repository
 ```bash
@@ -113,7 +163,10 @@ npm install
 
 Create `.env` file:
 ```env
-LONGCAT_API_KEY=your_api_key_here
+LONGCAT_API_KEY=your_longcat_api_key
+GEMINI_API_KEY=your_gemini_api_key
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret_key
 ```
 
 Start the server:
@@ -141,30 +194,6 @@ npm run dev
 ```
 App runs on `http://localhost:5173`
 
-## API Endpoints
-
-### POST `/ai/get-response`
-Send a prompt to the AI and receive a response.
-
-**Request Body:**
-```json
-{
-  "prompt": "Your code or question here"
-}
-```
-
-**Response:**
-Returns the AI's response as text/markdown.
-
-## AI Capabilities
-
-The AI is configured to act as a senior software engineer with expertise in:
-
-- **Code Review & Debugging**: Identify bugs, anti-patterns, security issues
-- **Optimization**: Performance, readability, architecture improvements
-- **Mentoring**: Career advice, learning paths, skill development
-- **System Design**: Architecture patterns, API design, scalability
-
 ## Scripts
 
 ### Frontend
@@ -183,12 +212,15 @@ The AI is configured to act as a senior software engineer with expertise in:
 
 ## Environment Variables
 
-### Backend (`.env`)
+### Backend
 | Variable | Description |
 |----------|-------------|
 | `LONGCAT_API_KEY` | API key for LongCat AI service |
+| `GEMINI_API_KEY` | API key for Google Gemini |
+| `MONGO_URI` | MongoDB connection string |
+| `JWT_SECRET` | Secret key for JWT tokens |
 
-### Frontend (`.env`)
+### Frontend
 | Variable | Description |
 |----------|-------------|
 | `VITE_BASE_URL` | Backend API URL (e.g., `http://localhost:3000`) |
