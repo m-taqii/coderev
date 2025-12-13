@@ -1,11 +1,13 @@
-import ChatInterface from './pages/ChatInterface'
-import './App.css'
 import { Routes, Route } from 'react-router-dom'
-import Home from './pages/Home'
-import Login from './pages/Login'
-import Signup from './pages/Signup'
+import { lazy, Suspense } from 'react'
 import Lenis from 'lenis'
 import { useEffect } from 'react'
+
+const Home = lazy(() => import('./pages/Home'))
+const ChatInterface = lazy(() => import('./pages/ChatInterface'))
+const Login = lazy(() => import('./pages/Login'))
+const Signup = lazy(() => import('./pages/Signup'))
+
 function App() {
   useEffect(() => {
     const lenis = new Lenis({
@@ -22,12 +24,14 @@ function App() {
     requestAnimationFrame(raf);
   }, []);
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/chat" element={<ChatInterface />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-    </Routes>
+    <Suspense fallback={<div className="flex h-screen w-full items-center justify-center bg-black text-white">Loading...</div>}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/chat" element={<ChatInterface />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+      </Routes>
+    </Suspense>
   )
 }
 

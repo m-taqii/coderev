@@ -4,42 +4,45 @@ import { Link } from 'react-router-dom'
 import Footer from '../components/Footer'
 import { Canvas } from '@react-three/fiber'
 import DamagedHelmet from '../components/DamagedHelmet'
-import { EffectComposer, ToneMapping, ChromaticAberration } from "@react-three/postprocessing"
-import { useHelper } from '@react-three/drei'
+import { EffectComposer, ToneMapping, ChromaticAberration, Bloom } from "@react-three/postprocessing"
+import { useHelper, AdaptiveDpr, AdaptiveEvents } from '@react-three/drei'
 import { DirectionalLightHelper, PointLightHelper } from 'three'
 
 const SceneContent = () => {
-  const lightRef = useRef()
-  const pointLightRef = useRef()
-  useHelper(lightRef, DirectionalLightHelper, 1)
-  useHelper(pointLightRef, PointLightHelper, 0.5)
-
   return (
     <>
+      <AdaptiveDpr pixelated />
+      <AdaptiveEvents />
       <ambientLight intensity={0.25} />
       <directionalLight
-        position={[5, 5, 5]}
-        intensity={1.2}
+        position={[5, 10, 7.5]}
+        intensity={1}
         castShadow
-        ref={lightRef}
+        shadow-mapSize={[512, 512]}
+        color="#ffffff"
       />
       <rectAreaLight
-        position={[0, 2, 4]}
+        position={[0, 0, 5]}
         width={4}
         height={4}
-        intensity={4}
+        intensity={2}
+        color="#4f46e5" /* Indigo hint */
       />
 
       <DamagedHelmet />
-      <pointLight
-        position={[0, 0, 0]}
-        intensity={10}
-        color="#88ccff"
-        ref={pointLightRef}
-      />
 
-      <EffectComposer>
+      {/* Rim light for better shape definition */}
+      <spotLight position={[-5, 5, -5]} intensity={4} color="#00ffff" />
+      <spotLight position={[5, -5, -5]} intensity={4} color="#ff00ff" />
+
+      <EffectComposer multisampling={0} disableNormalPass>
         <ToneMapping />
+        <Bloom
+          luminanceThreshold={0.5}
+          luminanceSmoothing={0.9}
+          intensity={0.5}
+          mipmapBlur
+        />
         <ChromaticAberration offset={[0.002, 0.002]} />
       </EffectComposer>
     </>
@@ -61,8 +64,23 @@ const Home = () => {
 
       {/* Hero Section */}
       <section className='h-screen w-full flex flex-col justify-center items-center relative overflow-hidden'>
-        <div className='absolute inset-0 w-full h-full bg-black'>
-          <Canvas camera={{ position: [0, 0, 10], fov: 45 }}>
+        <div className='absolute inset-0 w-full h-full bg-black z-0'>
+
+          {/* Background */}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-500/20 rounded-full blur-[100px] animate-pulse"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-blue-600/30 rounded-full blur-[80px]"></div>
+
+          {/* Noise overlay */}
+          <div className="absolute inset-0 bg-[url('/noise.svg')] opacity-20"></div>
+          <img 
+            src="/devion.png" 
+            alt="Devion Logo" 
+            className='absolute w-170 z-51 top-55 left-1/2 transform -translate-x-1/2 mix-blend-difference'
+            fetchPriority="high"
+            loading="eager"
+          />
+          {/* Canvas for 3D scene */}
+          <Canvas shadows dpr={[1, 1.5]} gl={{ antialias: false }} camera={{ position: [0, 0, 4], fov: 45 }}>
             <Suspense fallback={null}>
               <SceneContent />
             </Suspense>

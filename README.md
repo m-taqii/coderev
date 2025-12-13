@@ -4,16 +4,17 @@ Devion is a modern, AI-powered code review and developer assistant. It provides 
 
 ## Features
 
-- **AI Code Review**: Get detailed feedback on code quality, bugs, and improvements
-- **Multiple AI Models**: Choose between Quick Assist, Creative Writer, or Deep Thinker modes
+- **Immersive 3D Landing Page**: Interactive 3D elements powered by Three.js with post-processing effects.
+- **AI Code Review**: Get detailed feedback on code quality, bugs, and improvements.
+- **Multiple AI Models**: Choose between Quick Assist, Creative Writer, or Deep Thinker modes.
 - **Rate Limiting**: Fair usage policy with tiered access:
   - **Guests**: 5 requests per day (IP-based)
   - **Logged-in Users**: 50 requests per day
-- **Markdown Rendering**: AI responses support rich markdown with syntax highlighting
-- **User Authentication**: Sign up and login functionality with JWT tokens
-- **Chat History**: Maintains conversation context (up to 10 messages)
-- **Responsive Design**: Works on desktop and mobile devices
-- **Landing Page**: Modern homepage with feature highlights
+- **Markdown Rendering**: AI responses support rich markdown with syntax highlighting.
+- **User Authentication**: Sign up and login functionality with JWT tokens.
+- **Chat History**: Maintains conversation context (up to 10 messages).
+- **Responsive Design**: Works on desktop and mobile devices.
+- **Smooth Scrolling**: Enhanced scrolling experience using Lenis.
 
 ## Tech Stack
 
@@ -24,10 +25,15 @@ Devion is a modern, AI-powered code review and developer assistant. It provides 
 | Vite | 7.2.4 | Build Tool |
 | Tailwind CSS | 4.1.17 | Styling |
 | React Router DOM | 7.10.0 | Routing |
+| React Three Fiber | 9.4.2 | 3D Rendering (React wrapper for Three.js) |
+| Three.js | 0.181.0 | 3D Graphics |
+| Drei | 10.7.7 | R3F Helpers |
+| Postprocessing | 3.0.4 | 3D Visual Effects (Bloom, etc.) |
+| Lenis | 1.3.16 | Smooth Scrolling |
+| GSAP | 3.14.1 | Animations |
 | Axios | 1.13.2 | HTTP Client |
 | React Markdown | 10.1.0 | Markdown Rendering |
 | Rehype Highlight | 7.0.2 | Code Syntax Highlighting |
-| PrismJS | 1.30.0 | Additional Syntax Highlighting |
 
 ### Backend
 | Technology | Version | Purpose |
@@ -77,20 +83,22 @@ coderev/
 │
 ├── Frontend/
 │   ├── public/
-│   │   ├── robot.png           # Hero background image
-│   │   ├── loginimage.png      # Login page image
-│   │   ├── signupimage.png     # Signup page image
+│   │   ├── devion.png          # Logo
+│   │   ├── models/             # 3D Assets (GLTF/GLB)
+│   │   ├── noise.svg           # Background texturing
+│   │   ├── robot.png           # Fallback image
 │   │   └── fonts/              # Custom fonts (ScienceGothic)
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── Navbar.jsx
-│   │   │   └── Footer.jsx
+│   │   │   ├── Footer.jsx
+│   │   │   └── DamagedHelmet.jsx # 3D Component
 │   │   ├── pages/
-│   │   │   ├── Home.jsx        # Landing page
+│   │   │   ├── Home.jsx        # Landing page with 3D scene
 │   │   │   ├── ChatInterface.jsx # Chat UI with model selection
 │   │   │   ├── Login.jsx       # Login page
 │   │   │   └── Signup.jsx      # Signup page
-│   │   ├── App.jsx             # Routes setup
+│   │   ├── App.jsx             # Routes setup & Lenis scroll
 │   │   ├── App.css
 │   │   ├── index.css           # Global styles & fonts
 │   │   └── main.jsx            # React entry point
@@ -106,7 +114,7 @@ coderev/
 
 | Route | Page | Description |
 |-------|------|-------------|
-| `/` | Home | Landing page with features |
+| `/` | Home | Immersive landing page with 3D elements |
 | `/chat` | ChatInterface | AI chat with model selection |
 | `/login` | Login | User login form |
 | `/signup` | Signup | User registration form |
